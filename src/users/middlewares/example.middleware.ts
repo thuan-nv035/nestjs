@@ -14,11 +14,6 @@ export class ExampleMiddleware implements NestMiddleware {
     const { authorization } = req.headers;
     if (!authorization)
       throw new HttpException('No Authorization Token', HttpStatus.FORBIDDEN);
-    if (authorization === 'asjkdbasdhjabdajdad') next();
-    else
-      throw new HttpException(
-        'Invalid Authorization Token',
-        HttpStatus.FORBIDDEN,
-      );
+    else next();
   }
 }
