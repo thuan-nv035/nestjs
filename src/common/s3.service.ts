@@ -10,24 +10,26 @@ export class S3Service {
     this.s3 = new S3({
       accessKeyId: process.env.AWS_ACCESS_KEY,
       secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-      region: process.env.AWS_REGION
+      region: process.env.AWS_REGION,
     });
   }
 
   async uploadFileToS3(file: Express.Multer.File): Promise<string> {
-    console.log('1');
     const uniqueName = new Date().getTime().toString();
     const filename = uniqueName + extname(file.originalname);
-    console.log('2');
     const params: S3.Types.PutObjectRequest = {
       Bucket: 'myuploadfile',
       Key: filename,
       Body: file.buffer,
       ACL: 'public-read',
+      ContentDisposition: 'inline',
     };
-    console.log('3');
-    await this.s3.upload(params).promise();
-    console.log('4');
+    try {
+      const s3Response = await this.s3.upload(params).promise();
+      console.log('s3Response', s3Response);
+    } catch (err: any) {
+      console.log('err', err);
+    }
     // Trả về URL công khai của file tải lên
     return `https://myuploadfile.s3.amazonaws.com/${filename}`;
   }
