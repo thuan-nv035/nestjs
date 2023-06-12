@@ -3,9 +3,13 @@ import { UsersModule } from './users/users.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { User } from './typeorm/entities/User';
 import { Profile } from './typeorm/entities/Profile';
+import { Post } from './typeorm/entities/Post';
+import { MulterModule } from '@nestjs/platform-express';
+import { S3Service } from './common/s3.service';
 
 @Module({
   imports: [
+    MulterModule.register({ dest: './uploads' }),
     TypeOrmModule.forRoot({
       type: 'mysql',
       host: 'localhost',
@@ -13,7 +17,7 @@ import { Profile } from './typeorm/entities/Profile';
       username: 'root',
       password: 'thuan1005',
       database: 'ecom',
-      entities: [User, Profile],
+      entities: [User, Profile, Post],
       synchronize: true,
     }),
     UsersModule,

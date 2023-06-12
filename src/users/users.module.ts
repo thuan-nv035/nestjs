@@ -11,23 +11,12 @@ import { ExampleMiddleware } from './middlewares/example.middleware';
 import { UsersService } from './services/users/users.service';
 import { User } from 'src/typeorm/entities/User';
 import { Profile } from 'src/typeorm/entities/Profile';
+import { Post } from 'src/typeorm/entities/Post';
+import { S3Service } from 'src/common/s3.service';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([User, Profile])],
+  imports: [TypeOrmModule.forFeature([User, Profile, Post])],
   controllers: [UsersController],
-  providers: [UsersService],
+  providers: [UsersService, S3Service],
 })
-export class UsersModule implements NestModule {
-  configure(consumer: MiddlewareConsumer) {
-    consumer.apply(ExampleMiddleware).forRoutes(
-      {
-        path: 'users',
-        method: RequestMethod.GET,
-      },
-      {
-        path: 'users/:id',
-        method: RequestMethod.GET,
-      },
-    );
-  }
-}
+export class UsersModule {}

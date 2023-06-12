@@ -1,32 +1,29 @@
-import { CreateUserProfileParams } from './../../../utils/types';
 import {
   Body,
   Controller,
   Delete,
   Get,
-  HttpException,
-  HttpStatus,
   Param,
-  ParseBoolPipe,
   ParseIntPipe,
   Post,
   Put,
   Query,
-  Req,
-  Res,
-  UseGuards,
   UsePipes,
   ValidationPipe,
+  DefaultValuePipe,
+  UseInterceptors,
+  UploadedFile,
 } from '@nestjs/common';
-import { Request, Response } from 'express';
 import { CreateUserDto } from '../../dtos/CreateUser.dto';
-import { AuthGuard } from '../../guards/auth.guard';
-import { ValidateCreateUserPipe } from '../../pipes/validate-create-user.pipe';
 import { UsersService } from '../../services/users/users.service';
-import moment from 'moment';
 import { UpdateUserDto } from 'src/users/dtos/UpdateUser.dto';
 import { CreateUserProfileDto } from 'src/users/dtos/CreateUserProfileDto';
-
+import { User } from 'src/typeorm/entities/User';
+import { Pagination } from 'nestjs-typeorm-paginate';
+import { CreateUserPostDto } from 'src/users/dtos/CreateUserPost.dto';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { diskStorage } from 'multer';
+import { extname } from 'path';
 @Controller('users')
 export class UsersController {
   constructor(private userService: UsersService) {}
@@ -50,14 +47,14 @@ export class UsersController {
   // }
 
   @Get()
-  async getUser() {
-    const users = await this.userService.findUser();
-    // const userRes = users.forEach((user) => {
-    //   console.log('user.c', user.createdAt);
-    //   const date = moment(user.createdAt).format('YYYY-MM-DD');
-    //   return { ...user, createdAt: date };
-    // });
-    return { data: users };
+  async getUser(
+    @Query('page', new DefaultValuePipe(1), ParseIntPipe) page = 1,
+    @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit = 10,
+  ): Promise<Pagination<User>> {
+    return this.userService.findUser({
+      page,
+      limit,
+    });
   }
 
   @Get(':id')
@@ -67,8 +64,12 @@ export class UsersController {
 
   @Post()
   @UsePipes(new ValidationPipe())
-  createUser(@Body() createUserDto: CreateUserDto) {
-    this.userService.createUser(createUserDto);
+  @UseInterceptors(FileInterceptor('avatar'))
+  createUser(
+    @Body() createUserDto: CreateUserDto,
+    @UploadedFile() file: Express.Multer.File,
+  ) {
+    this.userService.createUser(createUserDto, file);
     return { messege: 'createUser successfully' };
   }
 
@@ -77,7 +78,6 @@ export class UsersController {
     @Param('id', ParseIntPipe) id: number,
     @Body() updateUserDto: UpdateUserDto,
   ) {
-    console.log('updateUserDto', updateUserDto);
     await this.userService.updateUser(id, updateUserDto);
     return { message: 'Updated user successfully' };
   }
@@ -94,5 +94,38 @@ export class UsersController {
     @Body() createUserProfileDto: CreateUserProfileDto,
   ) {
     return this.userService.createProfile(id, createUserProfileDto);
+  }
+
+  @Post(':id/post')
+  createUserPost(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() createUserPostDto: CreateUserPostDto,
+  ) {
+    return this.userService.createPost(id, createUserPostDto);
+  }
+
+  @Post('post')
+  async searchUserPost(@Query('search') search: string) {
+    return this.userService.searchPost(search);
+  }
+
+  @Post('file')
+  @UseInterceptors(
+    FileInterceptor('file', {
+      storage: diskStorage({
+        destination: './uploads',
+        filename: (req, file, callback) => {
+          const uniqueSuffix =
+            Date.now() + '-' + Math.round(Math.random() * 1e9);
+          const ext = extname(file.originalname);
+          const filename = `${uniqueSuffix}${ext}`;
+          callback(null, filename);
+        },
+      }),
+    }),
+  )
+  handleUpload(@UploadedFile() file: Express.Multer.File) {
+    console.log('file', file);
+    return 'File upload API';
   }
 }
