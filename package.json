@@ -29,6 +29,7 @@
     "aws-sdk": "^2.1395.0",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.13.2",
+    "dropbox": "^10.34.0",
     "moment": "^2.29.4",
     "mysql2": "^3.3.3",
     "nestjs-typeorm-paginate": "^4.0.3",
